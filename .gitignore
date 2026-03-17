@@ -8,3 +8,4 @@ proxmox-api-go
 *coverage.out
 
 *.log
+proxmox-api-go-completion.bash
