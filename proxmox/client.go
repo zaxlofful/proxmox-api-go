@@ -165,11 +165,12 @@ func (c *Client) New() ClientNew {
 		user:        user}
 
 	return ClientNew{
-		ApiToken: &apiTokenClient{oldClient: c, api: apiClientPtr},
-		Group:    &groupClient{oldClient: c, api: apiClientPtr},
-		Pool:     &poolClient{oldClient: c, api: apiClientPtr},
-		Snapshot: &snapshotClient{oldClient: c, api: apiClientPtr},
-		User:     &userClient{oldClient: c, api: apiClientPtr}}
+		ApiToken:       &apiTokenClient{oldClient: c, api: apiClientPtr},
+		BackupSchedule: &backupScheduleClient{api: apiClientPtr},
+		Group:          &groupClient{oldClient: c, api: apiClientPtr},
+		Pool:           &poolClient{oldClient: c, api: apiClientPtr},
+		Snapshot:       &snapshotClient{oldClient: c, api: apiClientPtr},
+		User:           &userClient{oldClient: c, api: apiClientPtr}}
 }
 
 func (c *Client) new() ClientNewTest {
