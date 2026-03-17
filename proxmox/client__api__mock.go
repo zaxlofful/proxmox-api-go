@@ -5,17 +5,22 @@ import (
 )
 
 type mockClientAPI struct {
+	createBackupScheduleFunc   func(ctx context.Context, params map[string]any) (BackupScheduleID, error)
 	createHaRuleFunc           func(ctx context.Context, params map[string]any) error
+	deleteBackupScheduleFunc   func(ctx context.Context, id BackupScheduleID) error
 	deleteHaResourceFunc       func(ctx context.Context, id GuestID) error
 	deleteHaRuleFunc           func(ctx context.Context, id HaRuleID) error
+	getBackupScheduleConfigFunc func(ctx context.Context, id BackupScheduleID) (map[string]any, error)
 	getGuestConfigFunc         func(ctx context.Context, vmr *VmRef) (map[string]any, error)
 	getGuestPendingChangesFunc func(ctx context.Context, vmr *VmRef) ([]any, error)
 	getGuestQemuAgentFunc      func(ctx context.Context, vmr *VmRef) (map[string]any, GuestAgentState, error)
 	getHaRuleFunc              func(ctx context.Context, id HaRuleID) (map[string]any, error)
 	getPoolConfigFunc          func(ctx context.Context, pool PoolName) (map[string]any, error)
 	getUserConfigFunc          func(ctx context.Context, userId UserID) (map[string]any, bool, error)
+	listBackupSchedulesFunc    func(ctx context.Context) ([]any, error)
 	listGuestResourcesFunc     func(ctx context.Context) ([]any, error)
 	listHaRulesFunc            func(ctx context.Context) ([]any, error)
+	updateBackupScheduleFunc   func(ctx context.Context, id BackupScheduleID, params map[string]any) error
 	updateGuestStatusFunc      func(ctx context.Context, vmr *VmRef, setStatus string, params map[string]interface{}) error
 	updateHaRuleFunc           func(ctx context.Context, id HaRuleID, params map[string]any) error
 }
@@ -26,11 +31,25 @@ func (m *mockClientAPI) panic(field string) { panic(field + " not set in mockCli
 
 // Interface methods
 
+func (m *mockClientAPI) createBackupSchedule(ctx context.Context, params map[string]any) (BackupScheduleID, error) {
+	if m.createBackupScheduleFunc == nil {
+		m.panic("createBackupScheduleFunc")
+	}
+	return m.createBackupScheduleFunc(ctx, params)
+}
+
 func (m *mockClientAPI) createHaRule(ctx context.Context, params map[string]any) error {
 	if m.createHaRuleFunc == nil {
 		m.panic("createHaRuleFunc")
 	}
 	return m.createHaRuleFunc(ctx, params)
+}
+
+func (m *mockClientAPI) deleteBackupSchedule(ctx context.Context, id BackupScheduleID) error {
+	if m.deleteBackupScheduleFunc == nil {
+		m.panic("deleteBackupScheduleFunc")
+	}
+	return m.deleteBackupScheduleFunc(ctx, id)
 }
 
 func (m *mockClientAPI) deleteHaResource(ctx context.Context, id GuestID) error {
@@ -59,6 +78,13 @@ func (m *mockClientAPI) getGuestPendingChanges(ctx context.Context, vmr *VmRef) 
 		m.panic("getGuestPendingChangesFunc")
 	}
 	return m.getGuestPendingChangesFunc(ctx, vmr)
+}
+
+func (m *mockClientAPI) getBackupScheduleConfig(ctx context.Context, id BackupScheduleID) (map[string]any, error) {
+	if m.getBackupScheduleConfigFunc == nil {
+		m.panic("getBackupScheduleConfigFunc")
+	}
+	return m.getBackupScheduleConfigFunc(ctx, id)
 }
 
 func (m *mockClientAPI) getGuestQemuAgent(ctx context.Context, vmr *VmRef) (map[string]any, GuestAgentState, error) {
@@ -96,6 +122,13 @@ func (m *mockClientAPI) listGuestResources(ctx context.Context) ([]any, error) {
 	return m.listGuestResourcesFunc(ctx)
 }
 
+func (m *mockClientAPI) listBackupSchedules(ctx context.Context) ([]any, error) {
+	if m.listBackupSchedulesFunc == nil {
+		m.panic("listBackupSchedulesFunc")
+	}
+	return m.listBackupSchedulesFunc(ctx)
+}
+
 func (m *mockClientAPI) listHaRules(ctx context.Context) ([]any, error) {
 	if m.listHaRulesFunc == nil {
 		m.panic("ListHaRulesFunc")
@@ -108,6 +141,13 @@ func (m *mockClientAPI) updateGuestStatus(ctx context.Context, vmr *VmRef, setSt
 		m.panic("updateGuestStatusFunc")
 	}
 	return m.updateGuestStatusFunc(ctx, vmr, setStatus, params)
+}
+
+func (m *mockClientAPI) updateBackupSchedule(ctx context.Context, id BackupScheduleID, params map[string]any) error {
+	if m.updateBackupScheduleFunc == nil {
+		m.panic("updateBackupScheduleFunc")
+	}
+	return m.updateBackupScheduleFunc(ctx, id, params)
 }
 
 func (m *mockClientAPI) updateHaRule(ctx context.Context, id HaRuleID, params map[string]any) error {

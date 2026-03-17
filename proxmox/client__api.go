@@ -9,17 +9,22 @@ import (
 
 // in the future we might put the interface even lower, but for now this is sufficient
 type clientApiInterface interface {
+	createBackupSchedule(ctx context.Context, params map[string]any) (BackupScheduleID, error)
 	createHaRule(ctx context.Context, params map[string]any) error
+	deleteBackupSchedule(ctx context.Context, id BackupScheduleID) error
 	deleteHaResource(ctx context.Context, id GuestID) error
 	deleteHaRule(ctx context.Context, id HaRuleID) error
+	getBackupScheduleConfig(ctx context.Context, id BackupScheduleID) (map[string]any, error)
 	getGuestConfig(ctx context.Context, vmr *VmRef) (map[string]any, error)
 	getGuestPendingChanges(ctx context.Context, vmr *VmRef) ([]any, error)
 	getGuestQemuAgent(ctx context.Context, vmr *VmRef) (map[string]any, GuestAgentState, error)
 	getHaRule(ctx context.Context, id HaRuleID) (map[string]any, error)
 	getPoolConfig(ctx context.Context, pool PoolName) (map[string]any, error)
 	getUserConfig(ctx context.Context, userId UserID) (map[string]any, bool, error)
+	listBackupSchedules(ctx context.Context) ([]any, error)
 	listGuestResources(ctx context.Context) ([]any, error)
 	listHaRules(ctx context.Context) ([]any, error)
+	updateBackupSchedule(ctx context.Context, id BackupScheduleID, params map[string]any) error
 	updateGuestStatus(ctx context.Context, vmr *VmRef, setStatus string, params map[string]interface{}) error
 	updateHaRule(ctx context.Context, id HaRuleID, params map[string]any) error
 }
@@ -34,9 +39,25 @@ type clientAPI struct {
 
 // Interface methods
 
+func (c *clientAPI) createBackupSchedule(ctx context.Context, params map[string]any) (BackupScheduleID, error) {
+	body := paramsToBody(params)
+	resp, err := c.postJsonRetry(ctx, "/cluster/backup", &body, 3)
+	if err != nil {
+		return "", err
+	}
+	if resp["data"] == nil {
+		return "", errors.New("backup schedule data not readable")
+	}
+	return BackupScheduleID(resp["data"].(string)), nil
+}
+
 func (c *clientAPI) createHaRule(ctx context.Context, params map[string]any) error {
 	_, err := c.post(ctx, "/cluster/ha/rules", params)
 	return err
+}
+
+func (c *clientAPI) deleteBackupSchedule(ctx context.Context, id BackupScheduleID) error {
+	return c.deleteRetry(ctx, "/cluster/backup/"+id.String(), 3)
 }
 
 func (c *clientAPI) deleteHaResource(ctx context.Context, id GuestID) error {
@@ -55,6 +76,10 @@ func (c *clientAPI) getGuestConfig(ctx context.Context, vmr *VmRef) (vmConfig ma
 
 func (c *clientAPI) getGuestPendingChanges(ctx context.Context, vmr *VmRef) ([]any, error) {
 	return c.getList(ctx, "/nodes/"+vmr.node.String()+"/"+vmr.vmType.String()+"/"+vmr.vmId.String()+"/pending", "Guest", "PENDING CONFIG")
+}
+
+func (c *clientAPI) getBackupScheduleConfig(ctx context.Context, id BackupScheduleID) (map[string]any, error) {
+	return c.getMap(ctx, "/cluster/backup/"+id.String(), "backup schedule", "CONFIG")
 }
 
 func (c *clientAPI) getGuestQemuAgent(ctx context.Context, vmr *VmRef) (map[string]any, GuestAgentState, error) {
@@ -105,12 +130,21 @@ func (c *clientAPI) listGuestResources(ctx context.Context) ([]any, error) {
 	return c.getResourceList(ctx, resourceListGuest)
 }
 
+func (c *clientAPI) listBackupSchedules(ctx context.Context) ([]any, error) {
+	return c.getList(ctx, "/cluster/backup", "backup schedules", "CONFIG")
+}
+
 func (c *clientAPI) listHaRules(ctx context.Context) ([]any, error) {
 	return c.getList(ctx, "/cluster/ha/rules", "ha rules", "CONFIG")
 }
 
 func (c *clientAPI) updateGuestStatus(ctx context.Context, vmr *VmRef, setStatus string, params map[string]interface{}) error {
 	return c.postTask(ctx, "/nodes/"+vmr.node.String()+"/"+vmr.vmType.String()+"/"+vmr.vmId.String()+"/status/"+setStatus, params)
+}
+
+func (c *clientAPI) updateBackupSchedule(ctx context.Context, id BackupScheduleID, params map[string]any) error {
+	_, err := c.put(ctx, "/cluster/backup/"+id.String(), params)
+	return err
 }
 
 func (c *clientAPI) updateHaRule(ctx context.Context, id HaRuleID, params map[string]any) error {
